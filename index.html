@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>to_Vercel - 文档索引</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2rem;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 0.95rem;
+        }
+        .file-list {
+            list-style: none;
+        }
+        .file-item {
+            margin-bottom: 15px;
+            transition: transform 0.2s;
+        }
+        .file-item:hover {
+            transform: translateX(10px);
+        }
+        .file-link {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            text-decoration: none;
+            color: #333;
+            border: 2px solid transparent;
+            transition: all 0.3s;
+        }
+        .file-link:hover {
+            background: #e9ecef;
+            border-color: #667eea;
+        }
+        .file-icon {
+            margin-right: 15px;
+            font-size: 1.5rem;
+        }
+        .file-info {
+            flex: 1;
+        }
+        .file-name {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+        .file-desc {
+            font-size: 0.85rem;
+            color: #888;
+            margin-top: 3px;
+        }
+        .file-type {
+            font-size: 0.75rem;
+            padding: 3px 8px;
+            background: #667eea;
+            color: white;
+            border-radius: 12px;
+            margin-left: 10px;
+        }
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            color: #888;
+            font-size: 0.85rem;
+        }
+        @media (max-width: 480px) {
+            .container {
+                padding: 25px;
+            }
+            h1 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>to_Vercel 文档库</h1>
+        <p class="subtitle">研究报告与技术文档索引</p>
+        
+        <ul class="file-list">
+            <li class="file-item">
+                <a href="Claude Code上下文工程分析.html" class="file-link">
+                    <span class="file-icon">🤖</span>
+                    <div class="file-info">
+                        <div class="file-name">Claude Code上下文工程分析</div>
+                        <div class="file-desc">Claude Code上下文工程技术分析</div>
+                    </div>
+                    <span class="file-type">HTML</span>
+                </a>
+            </li>
+            
+            <li class="file-item">
+                <a href="OpenClaw调研结果.md" class="file-link">
+                    <span class="file-icon">📋</span>
+                    <div class="file-info">
+                        <div class="file-name">OpenClaw调研结果</div>
+                        <div class="file-desc">OpenClaw项目调研报告</div>
+                    </div>
+                    <span class="file-type">Markdown</span>
+                </a>
+            </li>
+            
+            <li class="file-item">
+                <a href="Taalas硬连线AI芯片技术深度分析报告.html" class="file-link">
+                    <span class="file-icon">💻</span>
+                    <div class="file-info">
+                        <div class="file-name">Taalas硬连线AI芯片技术深度分析报告</div>
+                        <div class="file-desc">Taalas AI芯片技术分析</div>
+                    </div>
+                    <span class="file-type">HTML</span>
+                </a>
+            </li>
+            
+            <li class="file-item">
+                <a href="README.md" class="file-link">
+                    <span class="file-icon">📄</span>
+                    <div class="file-info">
+                        <div class="file-name">README</div>
+                        <div class="file-desc">项目说明文档</div>
+                    </div>
+                    <span class="file-type">Markdown</span>
+                </a>
+            </li>
+        </ul>
+        
+        <div class="footer">
+            <p>部署于 Vercel | 最后更新: 2025</p>
+        </div>
+    </div>
+</body>
+</html>
