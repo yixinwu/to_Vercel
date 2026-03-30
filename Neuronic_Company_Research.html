@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neuronic 公司调研报告</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .presentation-container {
+            width: 1280px;
+            height: 760px;
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .slide-content {
+            flex: 1;
+            position: relative;
+        }
+
+        .slide {
+            display: none;
+            height: 100%;
+            width: 100%;
+        }
+
+        .slide.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 封面页样式 */
+        .slide.cover {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .slide.cover h1 {
+            font-size: 64px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: white;
+        }
+
+        .slide.cover .subtitle {
+            font-size: 24px;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .slide.cover .meta {
+            margin-top: 40px;
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        /* 内容页样式 */
+        .slide.content {
+            flex-direction: column;
+        }
+
+        .slide-header {
+            background: #f8f9fa;
+            border-bottom: 2px solid #667eea;
+            padding: 20px 50px;
+        }
+
+        .slide-header h2 {
+            font-size: 28px;
+            font-weight: 600;
+            color: #1a1a2e;
+            margin: 0;
+        }
+
+        .slide-body {
+            flex: 1;
+            padding: 30px 50px;
+            overflow-y: auto;
+        }
+
+        .slide-body h3 {
+            font-size: 20px;
+            color: #667eea;
+            margin-bottom: 15px;
+            margin-top: 20px;
+        }
+
+        .slide-body h3:first-child {
+            margin-top: 0;
+        }
+
+        .slide-body p {
+            font-size: 16px;
+            line-height: 1.7;
+            color: #4a4a68;
+            margin-bottom: 12px;
+        }
+
+        .slide-body ul {
+            list-style: none;
+            padding-left: 0;
+            margin-top: 10px;
+        }
+
+        .slide-body li {
+            font-size: 15px;
+            color: #4a4a68;
+            padding: 8px 0;
+            padding-left: 24px;
+            position: relative;
+        }
+
+        .slide-body li::before {
+            content: '●';
+            color: #667eea;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+            font-size: 10px;
+            top: 12px;
+        }
+
+        .slide-body .highlight {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+
+        .slide-body .highlight p {
+            color: white;
+            margin: 0;
+        }
+
+        /* 表格样式 */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 14px;
+        }
+
+        .data-table th {
+            background: #667eea;
+            color: white;
+            padding: 12px 15px;
+            text-align: left;
+            font-weight: 500;
+        }
+
+        .data-table td {
+            padding: 10px 15px;
+            border-bottom: 1px solid #e9ecef;
+            color: #4a4a68;
+        }
+
+        .data-table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .data-table a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .data-table a:hover {
+            text-decoration: underline;
+        }
+
+        /* 双栏布局 */
+        .two-column {
+            display: flex;
+            gap: 30px;
+        }
+
+        .two-column .column {
+            flex: 1;
+        }
+
+        /* 产品卡片 */
+        .product-card {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+
+        .product-card h4 {
+            color: #667eea;
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .product-card .price {
+            font-size: 22px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 10px;
+        }
+
+        /* 状态标签 */
+        .status-verified {
+            display: inline-block;
+            background: #10b981;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-left: 8px;
+        }
+
+        .status-pending {
+            display: inline-block;
+            background: #f59e0b;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-left: 8px;
+        }
+
+        /* 导航栏样式 */
+        .navigation-bar {
+            height: 60px;
+            background: #ffffff;
+            border-top: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 50px;
+            z-index: 100;
+        }
+
+        .nav-button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            pointer-events: auto;
+        }
+
+        .nav-button:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .nav-button:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .nav-button.prev::before {
+            content: '←';
+            font-size: 16px;
+        }
+
+        .nav-button.next::after {
+            content: '→';
+            font-size: 16px;
+        }
+
+        .page-indicator {
+            font-size: 16px;
+            color: #4a5568;
+            font-weight: 500;
+        }
+
+        .page-indicator .current {
+            color: #667eea;
+            font-weight: 700;
+            font-size: 20px;
+        }
+
+        /* 全屏模式 */
+        .fullscreen-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            padding: 8px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            color: #4a5568;
+            transition: all 0.3s ease;
+            z-index: 200;
+        }
+
+        .fullscreen-btn:hover {
+            background: #fff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        /* 流程图 */
+        .flow-chart {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .flow-step {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 13px;
+            max-width: 180px;
+        }
+
+        .flow-arrow {
+            color: #667eea;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        /* 核心效益 */
+        .benefit-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .benefit-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .benefit-item h4 {
+            color: #667eea;
+            margin-bottom: 5px;
+            font-size: 15px;
+        }
+
+        .benefit-item p {
+            font-size: 13px;
+            margin: 0;
+        }
+
+        /* 链接列表 */
+        .link-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .link-item {
+            background: #f0f4ff;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            color: #667eea;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .link-item:hover {
+            background: #667eea;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="presentation-container">
+        <button class="fullscreen-btn" onclick="toggleFullscreen()">⛶ 全屏</button>
+        
+        <div class="slide-content" id="slideContainer">
+            <!-- 幻灯片 1: 封面 -->
+            <div class="slide cover active" data-slide="0">
+                <h1>Neuronic</h1>
+                <p class="subtitle">公司调研报告</p>
+                <p class="meta">脑部光生物调节 (PBM) 设备研发与销售</p>
+                <p class="meta">报告日期: 2026年3月30日</p>
+            </div>
+
+            <!-- 幻灯片 2: 公司概览 -->
+            <div class="slide content" data-slide="1">
+                <div class="slide-header">
+                    <h2>公司概览</h2>
+                </div>
+                <div class="slide-body">
+                    <table class="data-table">
+                        <tr><th>项目</th><th>信息</th></tr>
+                        <tr><td>公司名称</td><td>Neuronic</td></tr>
+                        <tr><td>官方网站</td><td><a href="https://www.neuronic.online/" target="_blank">https://www.neuronic.online/</a></td></tr>
+                        <tr><td>成立时间</td><td>2020年代初</td></tr>
+                        <tr><td>总部位置</td><td>多国运营 (美国/欧洲)</td></tr>
+                        <tr><td>主营业务</td><td>脑部光生物调节 (Photobiomodulation) 设备研发与销售</td></tr>
+                        <tr><td>商业模式</td><td>D2C (直接面向消费者) + B2B (面向医疗机构)</td></tr>
+                    </table>
+                    <h3>创始团队</h3>
+                    <div class="two-column">
+                        <div class="column">
+                            <div class="product-card">
+                                <h4>Liam Pingree</h4>
+                                <p>联合创始人，商务发展</p>
+                                <p>华尔街背景，受光疗法缓解帕金森症状的视频启发创立公司</p>
+                            </div>
+                        </div>
+                        <div class="column">
+                            <div class="product-card">
+                                <h4>Marvin Schönauer</h4>
+                                <p>联合创始人，产品与财务</p>
+                                <p>与Liam合作，致力于通过光疗法革新健康解决方案</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 幻灯片 3: 核心产品 -->
+            <div class="slide content" data-slide="2">
+                <div class="slide-header">
+                    <h2>核心产品</h2>
+                </div>
+                <div class="slide-body">
+                    <div class="two-column">
+                        <div class="column">
+                            <div class="product-card">
+                                <h4>Neuronic LIGHT</h4>
+                                <p class="price">$1,795</p>
+                                <p><strong>定位:</strong> 面向终端用户的入门级产品</p>
+                                <ul>
+                                    <li>1070nm 近红外波长</li>
+                                    <li>300个LED (291标准 + 9超强)</li>
+                                    <li>支持App或按钮控制</li>
+                                    <li>蓝牙连接，2小时电池续航</li>
+                                    <li>预设治疗方案</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="column">
+                            <div class="product-card">
+                                <h4>Neuradiant 1070</h4>
+                                <p class="price">$3,395</p>
+                                <p><strong>定位:</strong> 专业级/临床级产品</p>
+                                <ul>
+                                    <li>1070nm 近红外波长</li>
+                                    <li>256个高功率LED</li>
+                                    <li>4象限控制系统</li>
+                                    <li>10-40 mW/cm² 辐照度</li>
+                                    <li>适用于专业机构</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <h3>咨询服务</h3>
+                    <ul>
+                        <li>LIGHT Consultation: $1,795</li>
+                        <li>Neuradiant 1070 Consultation: 起 $1,795</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 幻灯片 4: 技术原理 -->
+            <div class="slide content" data-slide="3">
+                <div class="slide-header">
+                    <h2>技术原理：光生物调节 (Photobiomodulation)</h2>
+                </div>
+                <div class="slide-body">
+                    <h3>作用机制</h3>
+                    <div class="flow-chart">
+                        <div class="flow-step">
+                            <strong>步骤1</strong><br>1070nm光穿透颅骨
+                        </div>
+                        <span class="flow-arrow">→</span>
+                        <div class="flow-step">
+                            <strong>步骤2</strong><br>激活线粒体CCO
+                        </div>
+                        <span class="flow-arrow">→</span>
+                        <div class="flow-step">
+                            <strong>步骤3</strong><br>调节炎症，增加ATP
+                        </div>
+                        <span class="flow-arrow">→</span>
+                        <div class="flow-step">
+                            <strong>步骤4</strong><br>增强认知功能
+                        </div>
+                    </div>
+                    <h3>核心效益</h3>
+                    <div class="benefit-grid">
+                        <div class="benefit-item">
+                            <h4>增加细胞能量 (ATP)</h4>
+                            <p>线粒体功能增强，细胞代谢改善</p>
+                        </div>
+                        <div class="benefit-item">
+                            <h4>降低炎症</h4>
+                            <p>促进废物清除，减少神经炎症</p>
+                        </div>
+                        <div class="benefit-item">
+                            <h4>增加脑部氧合</h4>
+                            <p>改善脑血流和氧气供应</p>
+                        </div>
+                        <div class="benefit-item">
+                            <h4>提升神经可塑性</h4>
+                            <p>BDNF增加，学习记忆能力提升</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 幻灯片 5: 应用领域 -->
+            <div class="slide content" data-slide="4">
+                <div class="slide-header">
+                    <h2>应用领域</h2>
+                </div>
+                <div class="slide-body">
+                    <table class="data-table">
+                        <tr><th>应用领域</th><th>研究状态</th></tr>
+                        <tr><td>阿尔茨海默病 (Alzheimer's)</td><td>研究中</td></tr>
+                        <tr><td>自闭症 (Autism)</td><td>研究中</td></tr>
+                        <tr><td>脑雾 (Brain Fog)</td><td><strong style="color:#10b981">✓ 已发表研究</strong></td></tr>
+                        <tr><td>脑损伤 (Brain Injury)</td><td>研究中</td></tr>
+                        <tr><td>失眠 (Insomnia)</td><td>研究中</td></tr>
+                        <tr><td>ADHD</td><td>研究中</td></tr>
+                        <tr><td>抑郁症 (Depression)</td><td><strong style="color:#10b981">✓ 已发表研究</strong></td></tr>
+                        <tr><td>长新冠 (Long Covid)</td><td><strong style="color:#10b981">✓ 已发表研究</strong></td></tr>
+                        <tr><td>PTSD</td><td>研究中</td></tr>
+                        <tr><td>帕金森病 (Parkinson's)</td><td>研究中</td></tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 幻灯片 6: 科研实力 -->
+            <div class="slide content" data-slide="5">
+                <div class="slide-header">
+                    <h2>科研实力</h2>
+                </div>
+                <div class="slide-body">
+                    <div class="two-column">
+                        <div class="column">
+                            <h3>研究数据统计</h3>
+                            <table class="data-table">
+                                <tr><th>指标</th><th>数量</th></tr>
+                                <tr><td>已完成研究</td><td><strong>3项</strong></td></tr>
+                                <tr><td>进行中研究</td><td><strong>9项</strong></td></tr>
+                                <tr><td>计划中研究</td><td><strong>14项</strong></td></tr>
+                                <tr><td>研究参与者</td><td><strong>210+</strong></td></tr>
+                                <tr><td>PBM相关文献</td><td><strong>10,000+</strong></td></tr>
+                            </table>
+                        </div>
+                        <div class="column">
+                            <h3>科学顾问委员会</h3>
+                            <div class="product-card">
+                                <h4>Michael R Hamblin, PhD</h4>
+                                <p>哈佛医学院皮肤科前副教授</p>
+                                <p>发表780+篇同行评审文章</p>
+                            </div>
+                            <div class="product-card">
+                                <h4>Liisa Laakso, PhD</h4>
+                                <p>澳大利亚首位激光治疗领域博士</p>
+                                <p>2002年获欧洲医学激光认可</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 幻灯片 7: 科研合作伙伴 -->
+            <div class="slide content" data-slide="6">
+                <div class="slide-header">
+                    <h2>科研合作伙伴</h2>
+                </div>
+                <div class="slide-body">
+                    <table class="data-table">
+                        <tr><th>机构</th><th>国家</th><th>合作内容</th></tr>
+                        <tr><td>King's College London</td><td>英国</td><td>焦虑症案例研究</td></tr>
+                        <tr><td>University of Texas at Dallas</td><td>美国</td><td>行为与脑科学</td></tr>
+                        <tr><td>Santa Clara University</td><td>美国</td><td>EEG与tPBM闭环系统</td></tr>
+                        <tr><td>BRAI3N</td><td>比利时</td><td>PBM与tDCS联合研究</td></tr>
+                        <tr><td>University at Buffalo</td><td>美国</td><td>长新冠研究</td></tr>
+                        <tr><td>West Virginia University</td><td>美国</td><td>长新冠研究</td></tr>
+                        <tr><td>Shepherd University</td><td>美国</td><td>PBM卓越中心</td></tr>
+                        <tr><td>HealthTech Connex</td><td>加拿大</td><td>NeuroCatch扫描研究</td></tr>
+                    </table>
+                    <div class="highlight">
+                        <p><strong>重要承诺:</strong> 公司100%利润再投资于产品开发和临床研究，致力于获得医疗审批。</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 幻灯片 8: 已发表研究 - 新冠脑雾 -->
+            <div class="slide content" data-slide="7">
+                <div class="slide-header">
+                    <h2>已发表研究 ① 新冠脑雾 <span class="status-verified">已核实</span></h2>
+                </div>
+                <div class="slide-body">
+                    <table class="data-table">
+                        <tr><th>项目</th><th>信息</th></tr>
+                        <tr><td>论文标题</td><td>Use of either transcranial or whole-body photobiomodulation treatments improves COVID-19 brain fog</td></tr>
+                        <tr><td>作者</td><td>Robert Bowen, Praveen R Arany</td></tr>
+                        <tr><td>期刊</td><td>Journal of Biophotonics</td></tr>
+                        <tr><td>影响因子</td><td>~3.0 (2023年)</td></tr>
+                        <tr><td>DOI</td><td><a href="https://doi.org/10.1002/jbio.202200391" target="_blank">10.1002/jbio.202200391</a></td></tr>
+                        <tr><td>PMID</td><td><a href="https://pubmed.ncbi.nlm.nih.gov/37018063/" target="_blank">37018063</a></td></tr>
+                        <tr><td>发表日期</td><td>2023年8月</td></tr>
+                    </table>
+                    <h3>研究详情</h3>
+                    <ul>
+                        <li><strong>设备:</strong> Neuradiant 1070 (1070nm头盔) + 全身光床 (660/850nm)</li>
+                        <li><strong>设计:</strong> 开放标签、试点临床研究</li>
+                        <li><strong>样本:</strong> n=14 (每组7人)</li>
+                        <li><strong>方法:</strong> 4周12次治疗</li>
+                        <li><strong>结果:</strong> 两组均在认知测试中显示显著改善 (p<0.05)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 幻灯片 9: 已发表研究 - 焦虑抑郁 -->
+            <div class="slide content" data-slide="8">
+                <div class="slide-header">
+                    <h2>已发表研究 ② 焦虑与抑郁 <span class="status-verified">已核实</span></h2>
+                </div>
+                <div class="slide-body">
+                    <table class="data-table">
+                        <tr><th>项目</th><th>信息</th></tr>
+                        <tr><td>论文标题</td><td>Transcranial photobiomodulation as an adjunctive therapy for persistent anxiety and depression in patients undergoing psychotherapy, EMDR, and/or SSRI treatment: A case series</td></tr>
+                        <tr><td>作者</td><td>Jana Jamail, Leslie Fuller</td></tr>
+                        <tr><td>期刊</td><td>EXPLORE: The Journal of Science and Healing</td></tr>
+                        <tr><td>影响因子</td><td>~1.5 (2023年)</td></tr>
+                        <tr><td>DOI</td><td><a href="https://doi.org/10.1016/j.explore.2025.103228" target="_blank">10.1016/j.explore.2025.103228</a></td></tr>
+                        <tr><td>发表日期</td><td>2025年9-10月</td></tr>
+                    </table>
+                    <h3>研究详情</h3>
+                    <ul>
+                        <li><strong>设备:</strong> Neuronic 1070nm头盔</li>
+                        <li><strong>设计:</strong> 案例系列研究</li>
+                        <li><strong>样本:</strong> n=3 (成年女性)</li>
+                        <li><strong>方案:</strong> 12周tPBM (10Hz, 75-100%强度, 每日10-15分钟)</li>
+                        <li><strong>依从性:</strong> >92%</li>
+                        <li><strong>结果:</strong> 所有三人DASS-21抑郁评分均下降，两人睡眠改善</li>
+                    </ul>
+                    <p style="color:#f59e0b; margin-top:10px;"><strong>注意:</strong> 原报告错误标注为Brain Stimulation期刊，实际为EXPLORE期刊。</p>
+                </div>
+            </div>
+
+            <!-- 幻灯片 10: 已发表研究 - 注意力记忆 -->
+            <div class="slide content" data-slide="9">
+                <div class="slide-header">
+                    <h2>已发表研究 ③ 注意力与记忆 <span class="status-pending">待核实</span></h2>
+                </div>
+                <div class="slide-body">
+                    <table class="data-table">
+                        <tr><th>项目</th><th>信息</th></tr>
+                        <tr><td>论文标题</td><td>待核实 (官网标注为Military Medicine期刊)</td></tr>
+                        <tr><td>发表日期</td><td>2025年9月16日 (官网标注)</td></tr>
+                        <tr><td>期刊</td><td>Military Medicine</td></tr>
+                        <tr><td>影响因子</td><td>~1.5-2.0 (预估)</td></tr>
+                        <tr><td>官网链接</td><td><a href="https://academic.oup.com/milmed/article/190/Supplement_2/456/8256308" target="_blank">Military Medicine Article</a></td></tr>
+                        <tr><td>合作方</td><td>UT Dallas, Neuronic</td></tr>
+                    </table>
+                    <h3>研究内容 (根据官网)</h3>
+                    <ul>
+                        <li>评估tPBM对警觉性和工作记忆任务中认知表现的影响</li>
+                        <li>预测tPBM组相比假治疗组有更好的认知表现和情绪</li>
+                        <li>预期跨会话累积改善</li>
+                    </ul>
+                    <div class="highlight">
+                        <p><strong>说明:</strong> 由于访问限制，该论文的详细信息(包括DOI)需进一步核实。</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 幻灯片 11: 已发表论文汇总 -->
+            <div class="slide content" data-slide="10">
+                <div class="slide-header">
+                    <h2>已发表论文汇总表</h2>
+                </div>
+                <div class="slide-body">
+                    <table class="data-table">
+                        <tr>
+                            <th>序号</th>
+                            <th>论文标题</th>
+                            <th>期刊</th>
+                            <th>IF</th>
+                            <th>DOI</th>
+                            <th>状态</th>
+                        </tr>
+                        <tr>
+                            <td>1</td>
+                            <td>Use of either transcranial or whole-body PBM treatments improves COVID-19 brain fog</td>
+                            <td>Journal of Biophotonics</td>
+                            <td>~3.0</td>
+                            <td><a href="https://doi.org/10.1002/jbio.202200391" target="_blank">链接</a></td>
+                            <td><span class="status-verified">已核实</span></td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td>tPBM as an adjunctive therapy for persistent anxiety and depression</td>
+                            <td>EXPLORE</td>
+                            <td>~1.5</td>
+                            <td><a href="https://doi.org/10.1016/j.explore.2025.103228" target="_blank">链接</a></td>
+                            <td><span class="status-verified">已核实</span></td>
+                        </tr>
+                        <tr>
+                            <td>3</td>
+                            <td>Attention & Memory (标题待确认)</td>
+                            <td>Military Medicine</td>
+                            <td>~1.5-2.0</td>
+                            <td>待核实</td>
+                            <td><span class="status-pending">待核实</span></td>
+                        </tr>
+                    </table>
+                    <h3>核实说明</h3>
+                    <ul>
+                        <li>✅ <strong>已核实:</strong> 通过PubMed和DOI链接确认的论文</li>
+                        <li>⚠️ <strong>待核实:</strong> 因访问限制或信息不完整需进一步确认的论文</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 幻灯片 12: 市场表现 -->
+            <div class="slide content" data-slide="11">
+                <div class="slide-header">
+                    <h2>市场表现</h2>
+                </div>
+                <div class="slide-body">
+                    <div class="two-column">
+                        <div class="column">
+                            <h3>媒体报道</h3>
+                            <div class="link-list">
+                                <a href="https://www.forbes.com/councils/forbesbusinesscouncil/2023/06/21/understanding-four-unknowns-about-your-high-performing-business-brain/" target="_blank" class="link-item">Forbes</a>
+                                <a href="https://www.irishtimes.com/business/innovation/2025/03/20/wearable-led-device-can-help-protect-and-improve-brain-health/" target="_blank" class="link-item">The Irish Times</a>
+                                <a href="https://parkinsonsnewstoday.com/news/shining-light-parkinsons-disease-is-aim-photobiomodulation-study/" target="_blank" class="link-item">Parkinson's News Today</a>
+                                <a href="https://finance.yahoo.com/news/neuronic-santa-clara-university-partner-160000832.html" target="_blank" class="link-item">Yahoo Finance</a>
+                                <span class="link-item">BBC纪录片</span>
+                                <span class="link-item">Selfridges百货</span>
+                            </div>
+                            <h3 style="margin-top:20px;">知名用户</h3>
+                            <ul>
+                                <li><strong>Bryan Johnson</strong> - 著名生物黑客，Blueprint创始人</li>
+                                <li><strong>Steven Bartlett</strong> - 企业家，BBC Dragon's Den主持人</li>
+                                <li><strong>Joanna Bensz</strong> - Longevity Center CEO</li>
+                            </ul>
+                        </div>
+                        <div class="column">
+                            <h3>荣誉奖项</h3>
+                            <div class="product-card">
+                                <h4>🏆 2026年度最佳非侵入性健康技术奖</h4>
+                                <p>Best Non-Invasive Health Technology of the Year</p>
+                            </div>
+                            <h3>商业策略</h3>
+                            <ul>
+                                <li><strong>销售渠道:</strong> 官网D2C + 医疗机构B2B</li>
+                                <li><strong>免费国际运输</strong></li>
+                                <li><strong>90天无风险试用</strong></li>
+                                <li><strong>HSA/FSA支付资格</strong></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 幻灯片 13: 公司团队 -->
+            <div class="slide content" data-slide="12">
+                <div class="slide-header">
+                    <h2>公司团队</h2>
+                </div>
+                <div class="slide-body">
+                    <div class="two-column">
+                        <div class="column">
+                            <h3>研究与咨询团队</h3>
+                            <table class="data-table">
+                                <tr><th>姓名</th><th>职位</th></tr>
+                                <tr><td>Brooke Hill</td><td>咨询协调员</td></tr>
+                                <tr><td>Ramona von Leden PhD</td><td>科学事务顾问</td></tr>
+                                <tr><td>Jordan Hamlin</td><td>顾问</td></tr>
+                                <tr><td>Will Dixon</td><td>研究策略师</td></tr>
+                                <tr><td>Alyssa Igarta</td><td>客户成功经理</td></tr>
+                                <tr><td>Maria Da Costa</td><td>研究协调员</td></tr>
+                            </table>
+                        </div>
+                        <div class="column">
+                            <h3>产品开发团队</h3>
+                            <table class="data-table">
+                                <tr><th>姓名</th><th>职位</th></tr>
+                                <tr><td>Tekant Gundogan</td><td>工程主管</td></tr>
+                                <tr><td>Ender Aras</td><td>设计主管</td></tr>
+                                <tr><td>Ahmet Navruz</td><td>高级软件工程师</td></tr>
+                                <tr><td>Thameur Kalai</td><td>软件工程师</td></tr>
+                                <tr><td>Alper Sahin</td><td>软件工程师</td></tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 幻灯片 14: 总结 -->
+            <div class="slide content" data-slide="13">
+                <div class="slide-header">
+                    <h2>总结</h2>
+                </div>
+                <div class="slide-body">
+                    <div class="two-column">
+                        <div class="column">
+                            <h3>优势</h3>
+                            <ul>
+                                <li><strong>科研导向:</strong> 100%利润再投资</li>
+                                <li><strong>权威背书:</strong> 哈佛专家+顶尖大学</li>
+                                <li><strong>产品差异化:</strong> 1070nm波长技术</li>
+                                <li><strong>市场认可:</strong> 知名媒体和KOL</li>
+                                <li><strong>商业模式:</strong> D2C+B2B双轨并行</li>
+                            </ul>
+                        </div>
+                        <div class="column">
+                            <h3>挑战</h3>
+                            <ul>
+                                <li>产品价格较高</li>
+                                <li>医疗监管审批进行中</li>
+                                <li>需更多临床数据</li>
+                                <li>公众认知度有限</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <h3>市场前景</h3>
+                    <div class="highlight">
+                        <p>随着全球人口老龄化加剧、精神健康问题日益突出，以及生物黑客/长寿科技的兴起，脑健康设备市场潜力巨大。Neuronic在学术研究和商业化之间取得了较好的平衡，值得关注。</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 幻灯片 15: 结束页 -->
+            <div class="slide cover" data-slide="14">
+                <h1>谢谢观看</h1>
+                <p class="subtitle">Neuronic 公司调研报告</p>
+                <p class="meta">报告日期: 2026年3月30日</p>
+                <p class="meta">数据来源: https://www.neuronic.online/</p>
+            </div>
+        </div>
+
+        <div class="navigation-bar">
+            <button class="nav-button prev" id="prevBtn" type="button">上一页</button>
+            <div class="page-indicator">
+                <span class="current" id="currentPage">1</span> / <span id="totalPages">15</span>
+            </div>
+            <button class="nav-button next" id="nextBtn" type="button">下一页</button>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            let currentSlide = 0;
+            const slides = document.querySelectorAll('.slide');
+            const totalSlides = slides.length;
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const currentPageEl = document.getElementById('currentPage');
+            const totalPagesEl = document.getElementById('totalPages');
+
+            function showSlide(index) {
+                slides.forEach((slide, i) => {
+                    if (i === index) {
+                        slide.classList.add('active');
+                        slide.style.display = 'flex';
+                    } else {
+                        slide.classList.remove('active');
+                        slide.style.display = 'none';
+                    }
+                });
+                
+                currentPageEl.textContent = index + 1;
+                prevBtn.disabled = index === 0;
+                nextBtn.disabled = index === totalSlides - 1;
+            }
+
+            function changeSlide(direction) {
+                const newIndex = currentSlide + direction;
+                if (newIndex >= 0 && newIndex < totalSlides) {
+                    currentSlide = newIndex;
+                    showSlide(currentSlide);
+                }
+            }
+
+            // 绑定按钮事件
+            prevBtn.addEventListener('click', function() {
+                changeSlide(-1);
+            });
+
+            nextBtn.addEventListener('click', function() {
+                changeSlide(1);
+            });
+
+            // 键盘导航
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    changeSlide(-1);
+                } else if (e.key === 'ArrowRight') {
+                    e.preventDefault();
+                    changeSlide(1);
+                }
+            });
+
+            // 全屏功能
+            window.toggleFullscreen = function() {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen().catch(err => {
+                        console.log('Error attempting to enable fullscreen:', err);
+                    });
+                } else {
+                    document.exitFullscreen();
+                }
+            };
+
+            // 初始化
+            totalPagesEl.textContent = totalSlides;
+            showSlide(0);
+        })();
+    </script>
+</body>
+</html>
