@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expert Offloading across Memory Hierarchy</title>
+    <style>
+        body {
+            font-family: "Microsoft YaHei", Arial, sans-serif;
+            line-height: 1.8;
+            color: #333;
+            background: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h1 {
+            font-size: 2.2em;
+            margin-bottom: 10px;
+            color: #2c3e50;
+            border-bottom: 3px solid #e67e22;
+            padding-bottom: 10px;
+        }
+        h2 {
+            font-size: 1.6em;
+            margin: 35px 0 20px 0;
+            color: #d35400;
+            border-left: 4px solid #e67e22;
+            padding-left: 15px;
+        }
+        h3 {
+            font-size: 1.3em;
+            margin: 25px 0 15px 0;
+            color: #34495e;
+        }
+        h4 {
+            font-size: 1.1em;
+            margin: 20px 0 10px 0;
+            color: #34495e;
+        }
+        p {
+            margin-bottom: 15px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        th {
+            background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);
+            color: white;
+            font-weight: 600;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        tr:hover {
+            background-color: #fff3e6;
+        }
+        ul, ol {
+            margin-left: 30px;
+            margin-bottom: 15px;
+        }
+        li {
+            margin-bottom: 8px;
+        }
+        blockquote {
+            border-left: 4px solid #e67e22;
+            padding-left: 20px;
+            margin: 20px 0;
+            color: #7f8c8d;
+            font-style: italic;
+            background: #fff9f0;
+            padding: 15px 20px;
+        }
+        hr {
+            border: none;
+            height: 1px;
+            background: linear-gradient(to right, transparent, #e67e22, transparent);
+            margin: 30px 0;
+        }
+        strong {
+            color: #2c3e50;
+            font-weight: bold;
+        }
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            color: #e74c3c;
+        }
+        pre {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 20px 0;
+        }
+        pre code {
+            background: none;
+            color: inherit;
+            padding: 0;
+        }
+        a {
+            color: #e67e22;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        mark {
+            background: #fff3cd;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+<p>广泛的 <strong>LLM Offloading</strong> 技术体系，核心思想是将 MoE 模型中那些当前未被激活的专家权重，按照访问频率和延迟容忍度，分层存放在 GPU VRAM → CPU DDR RAM → NVMe SSD 的存储层级中。</p>
+<h2 id="_1">技术原理</h2>
+<p>MoE 模型（如 DeepSeek V3、Mixtral、Qwen3-235B）的特点是：推理时每个 token 只激活少数几个专家（如 671B 参数的 DeepSeek R1 每次只激活约 37B），其余专家处于"休眠"状态。因此：</p>
+<ul>
+<li><strong>热专家</strong>（高频激活）→ 常驻 GPU VRAM 或 CPU DDR RAM</li>
+<li><strong>温专家</strong>（中频激活）→ 存放在 CPU DDR RAM，按需加载到 GPU</li>
+<li><strong>冷专家</strong>（低频激活）→ 存放在 NVMe SSD，需要时再读取</li>
+</ul>
+<p>瓶颈在于 <strong>I/O 带宽</strong>：DDR RAM → GPU 约几十 GB/s，NVMe SSD → CPU 约 7–14 GB/s（PCIe 5.0），延迟差距巨大。</p>
+<h2 id="20242026">全球主要进展（2024–2026）</h2>
+<table>
+<thead>
+<tr>
+<th>项目/论文</th>
+<th>机构</th>
+<th>核心贡献</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Fiddler</strong>（ICLR 2025）</td>
+<td>华盛顿大学</td>
+<td>CPU-GPU 协同调度，将专家保留在 CPU RAM，相比朴素方案加速 8–10×<a href="https://arxiv.org/html/2402.07033v2">11</a><a href="https://openreview.net/forum?id=N5fVv6PZGz">13</a></td>
+</tr>
+<tr>
+<td><strong>MoE-Lightning</strong>（ASPLOS 2025）</td>
+<td>—</td>
+<td>GPU 内存受限场景下吞吐量提升 10.3×，专注 SSD/RAM 分级卸载<a href="https://pschafhalter.com/papers/2025-asplos-moe-lightning.pdf">15</a></td>
+</tr>
+<tr>
+<td><strong>fMoE</strong>（2025.02）</td>
+<td>—</td>
+<td>细粒度专家卸载，解决粗粒度方案的碎片化问题<a href="https://arxiv.org/html/2502.05370v1">18</a></td>
+</tr>
+<tr>
+<td><strong>HOBBIT</strong>（2024.11）</td>
+<td>—</td>
+<td>混合精度专家卸载，冷专家用更低 bit 量化后存 SSD<a href="https://arxiv.org/html/2411.01433v2">23</a></td>
+</tr>
+<tr>
+<td><strong>SSD Offloading Harmful?</strong>（2025.08）</td>
+<td>—</td>
+<td>首次系统分析 SSD 卸载的<strong>能耗代价</strong>，指出频繁 SSD 读取可能带来严重能效问题<a href="https://arxiv.org/html/2508.06978v1">1</a></td>
+</tr>
+</tbody>
+</table>
+<h3 id="_2">工程落地方向</h3>
+<ul>
+<li><strong>llama.cpp</strong>：目前支持 CPU DDR RAM 卸载（<code>--n-gpu-layers</code> 控制），SSD 直接卸载尚不完善，社区正在讨论完整的 NVMe offload 支持<a href="https://github.com/ggml-org/llama.cpp/discussions/19163">6</a><a href="https://huggingface.co/blog/Doctor-Shotgun/llamacpp-moe-offload-guide">24</a>。</li>
+<li><strong>vLLM</strong>：2025 年底开始讨论 Expert Offloading 支持，但默认仍要求所有专家在初始化时完整加载<a href="https://discuss.vllm.ai/t/enable-expert-offloading/1884">8</a>。</li>
+<li><strong>LMCache</strong>（2026.04）：新架构将 MoE 推理性能提升 10×，支持跨 HBM/DDR/NVMe 的层级调度<a href="https://blog.lmcache.ai/en/2026/04/03/lmcaches-new-architecture-boosts-moe-inference-performance-by-10x/">9</a>。</li>
+<li><strong>NVIDIA NCX 方案</strong>（2026.03）：官方文档明确提出 KV Cache 和专家权重跨 HBM → DDR → NVMe 的分层部署方案<a href="https://docs.nvidia.com/ncx/ncp-inference-ra/latest/example-workload-large-moe-llm-inference.html">4</a>。</li>
+</ul>
+<h2 id="_3">当前核心挑战</h2>
+<ol>
+<li><strong>SSD 能耗问题</strong>：频繁随机读取 NVMe 的能耗可能超过节省的 GPU 成本，2025 年的研究已对此提出警告<a href="https://arxiv.org/html/2508.06978v1">1</a>。</li>
+<li><strong>预测精度</strong>：提前预测"下一个 token 会激活哪些专家"是减少 I/O 等待的关键，目前准确率仍有限。</li>
+<li><strong>带宽墙</strong>：即使 PCIe 5.0 NVMe 理论带宽达 14 GB/s，在大批量推理时仍是严重瓶颈。</li>
+<li><strong>软件生态</strong>：主流框架（vLLM、llama.cpp）对 SSD 层级的原生支持仍不成熟。</li>
+</ol>
+<p>总体来看，<strong>DDR RAM 卸载已较为成熟</strong>，<strong>SSD 卸载仍处于研究与工程探索阶段</strong>，能否实用化取决于未来高速 NVMe（如 PCIe 6.0）及更智能的专家预取算法的发展。</p>
+<hr />
+<p>2026年，MoE（Mixture of Experts）专家卸载算法在本地部署领域取得了显著进展，呈现出<strong>从粗粒度静态策略向细粒度动态协同</strong>的范式转变。以下是核心进展的系统梳理：</p>
+<h2 id="_4">一、核心算法框架突破</h2>
+<h3 id="1-dali">1. DALI：工作负载感知的动态卸载框架</h3>
+<p>中国科学院自动化所提出的 <strong>DALI</strong> 是当前本地PC部署的标杆方案。它针对现有方法的三大低效问题——静态专家分配导致的CPU-GPU负载失衡、预取高负载专家精度低、缓存策略忽视工作负载动态性——提出了三项创新：</p>
+<ul>
+<li>
+<p><strong>Greedy Assignment 策略</strong>：将专家分配建模为0-1整数优化问题，按CPU与GPU执行时间差异排序，动态决定每个专家的去向，实现92%的最优解性能，但求解开销仅为最优解的5%。</p>
+</li>
+<li>
+<p><strong>Residual-Based Prefetching</strong>：利用相邻MoE层之间的残差信息修正特征，精准预测高负载专家，解决传统预取在混合框架中命中率极低的问题。</p>
+</li>
+<li>
+<p><strong>Workload-Aware Cache Replacement</strong>：基于专家工作负载的时间相关性设计缓存替换策略，显著提升缓存命中率。</p>
+</li>
+</ul>
+<p>在 DeepSeek-V2-Lite、Qwen3-30B-A3B、Mixtral-8×7B 等模型上的测试表明，DALI 在 prefill 阶段相比 llama.cpp、KTransformers、MoE-Lightning、HybriMoE 分别实现 <strong>7.62×、3.80×、2.45×、2.00×</strong> 加速；decoding 阶段分别实现 <strong>3.97×、2.16×、1.48×、1.32×</strong> 加速。</p>
+<p><a href="https://arxiv.org/html/2602.03495v1"></a></p>
+<h3 id="2-expertflowtoken">2. ExpertFlow：预测性专家缓存与Token调度</h3>
+<p>发表于 DAC 2026 的 <strong>ExpertFlow</strong> 通过"预测-调度-缓存"三位一体设计，解决了传统卸载中专家预测不准确、专家利用率低、缓存策略失效的问题：</p>
+<ul>
+<li>
+<p><strong>Routing Path Predictor (RPP)</strong>：采用类T5的Encoder-Decoder架构，在<strong>单次前向传播中预测所有MoE层</strong>的专家激活，实现95%的预测准确率，支持跨领域泛化。</p>
+</li>
+<li>
+<p><strong>Token Scheduler (TS)</strong>：基于K-Means聚类对token进行重分组，将路由路径相似的token聚合到同一批次，减少每批次激活的专家数量，提升单专家token负载。</p>
+</li>
+<li>
+<p><strong>Expert Cache Engine (ECE)</strong>：结合预测性局部感知缓存（PLEC）和实时纠错机制，实现91.96%的缓存命中率，较LRU提升61.15%。</p>
+</li>
+</ul>
+<p>ExpertFlow 在单GPU环境下将GPU内存占用降低 <strong>93.72%</strong>，吞吐量提升最高达 <strong>10×</strong>。</p>
+<p><a href="https://arxiv.org/html/2410.17954v2"></a></p>
+<h3 id="3-layerscope">3. LayerScope：预测性跨层调度</h3>
+<p>针对多批次MoE推理在旧式服务器上的部署瓶颈，<strong>LayerScope</strong> 提出三层协同设计：</p>
+<ul>
+<li>
+<p><strong>LLaPor（可学习层感知预测器）</strong>：发现MoE不同层组（输入层、中间层、输出层）具有不同的专家激活模式，据此实现高精度专家选择预测。</p>
+</li>
+<li>
+<p><strong>PreSched（预取感知跨层调度）</strong>：量化全局性能收益而非局限于单层局部最优，智能平衡预取成本与按需加载开销。</p>
+</li>
+<li>
+<p><strong>AsyncIO（异步I/O优化器）</strong>：解耦I/O与计算，重叠PCIe传输与GPU/CPU内核执行。</p>
+</li>
+</ul>
+<p>实验显示，LayerScope 实现 <strong>141%</strong> 的端到端推理吞吐量提升和 <strong>74.6%</strong> 的解码延迟降低。</p>
+<p><a href="https://arxiv.org/html/2509.23638v2"></a></p>
+<h3 id="4-finemoe">4. FineMoE：细粒度专家卸载</h3>
+<p>EuroSys 2026 的 <strong>FineMoE</strong> 提出"专家映射"（Expert Map）数据结构，在迭代级别记录门控网络输出的概率分布，通过比较历史专家轨迹相似性指导卸载决策。同时结合输入提示的语义嵌入增强专家搜索，实现：</p>
+<ul>
+<li>推理延迟降低 <strong>47%</strong>    </li>
+<li>专家命中率提升 <strong>39%</strong>     <a href="https://intellisys.haow.us/assets/pdf/Hanfei_FineMoE_EuroSys26.pdf"></a></li>
+</ul>
+<h3 id="5-zipmoe">5. ZipMoE：无损压缩与缓存亲和调度</h3>
+<p><strong>ZipMoE</strong> 针对边缘设备，利用MoE参数的统计冗余性，通过缓存-调度协同设计，将on-device MoE推理从I/O瓶颈转变为计算中心型工作流：</p>
+<ul>
+<li>推理延迟降低 <strong>72.77%</strong>     </li>
+<li>吞吐量提升 <strong>6.76×</strong> 
+    <a href="https://arxiv.org/abs/2601.21198"></a></li>
+</ul>
+<h2 id="moe">二、理论认知深化：并非所有MoE都适合卸载</h2>
+<p>ICLR 2026 的一项关键研究首次系统量化了MoE模型的<strong>局部路由一致性</strong>（Local Routing Consistency）属性，指出：</p>
+<ul>
+<li>
+<p><strong>核心发现</strong>：连续token是否激活相似专家，这种"局部路由一致性"在不同MoE模型间差异巨大。GRIN-MoE等模型展现出强连续路由模式，非常适合专家缓存；而Jamba-Mini-1.6等模型则不具备此特性。</p>
+</li>
+<li>
+<p><strong>设计建议</strong>：</p>
+<ul>
+<li>追求<strong>全局负载均衡</strong>而非局部负载均衡        </li>
+<li>若计划支持专家卸载，应<strong>避免或减少共享专家</strong>的使用        </li>
+<li>在可行范围内<strong>增加专家数量和激活数量</strong>        </li>
+<li>通过预训练数据分布引导<strong>领域专业化专家</strong>         </li>
+<li><strong>缓存大小设为活跃专家数量的2倍</strong>，可平衡效果与效率                 <a href="https://hub.baai.ac.cn/view/52231"></a></li>
+</ul>
+</li>
+</ul>
+<h2 id="_5">三、工程实践与开源生态进展</h2>
+<h3 id="1">1. 推理引擎原生支持</h3>
+<ul>
+<li>
+<p><strong>vLLM</strong>（2026年3月，PR #37190）：引入MoE专家CPU卸载，支持GPU LFRU（Least Frequently Recently Used）缓存，在7.6GB VRAM下以缓存大小8运行Nemotron达到15.6 tokens/s，较标准LRU提升5.2%。</p>
+</li>
+<li>
+<p><strong>llama.cpp</strong>（2026年3月，Issue #20757）：提出双层GPU+RAM专家缓存，采用SLRU（Segmented LRU）策略，在GPT-OSS-120B上实现8GB VRAM下12-14 tokens/s的稳态性能。同时支持通过 <code>-ot ".ffn_.*_exps.=CPU"</code> 将DeepSeek-V3.1的MoE层卸载到CPU，让非MoE层常驻GPU。    <a href="https://theagenttimes.com/articles/dynamic-expert-caching-delivers-27-faster-moe-inference-on-c-319f3c82"></a></p>
+</li>
+</ul>
+<h3 id="2-dynaexq">2. 动态专家量化（DynaExq）</h3>
+<p>2026年出现了一种新的精度分级卸载思路：每个专家维护一个三级精度状态机——<strong>热（FP8）、温（INT4）、冷（INT2或CPU卸载）</strong>。通过运行频率计数器触发状态转换，且重量化过程在独立CUDA流上异步执行，不阻塞推理路径。虽然完整的动态运行时精度切换仍属研究级，但基于imatrix的静态混合精度（如ExLlamaV2的EXL2格式）已可通过校准数据自动为热专家分配更高比特率。<a href="https://www.spheron.network/blog/dynamic-expert-quantization-moe-offloading-gpu-cloud/"></a></p>
+<h3 id="3-kv-cache">3. 专家卸载与KV Cache卸载的协同</h3>
+<p>2026年的系统开始将专家卸载与KV Cache分层管理结合。vLLM 0.7+ 支持PagedAttention块级别的CPU卸载和磁盘卸载（实验性），配合前缀缓存去重，使得在单卡H100上运行144GB KV工作集成为可能。 <a href="https://callsphere.ai/blog/kv-cache-offloading-cpu-gpu-nvme-tradeoffs-2026"></a></p>
+<h2 id="2026moe">四、总结：2026年MoE本地部署的技术趋势</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">维度</th>
+<th style="text-align: left;">2025年及以前</th>
+<th style="text-align: left;">2026年进展</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>卸载粒度</strong></td>
+<td style="text-align: left;">层级别（Layer-wise）或==静态专家分配==</td>
+<td style="text-align: left;">动态专家级别（Expert-wise），==实时负载均衡==</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>预取策略</strong></td>
+<td style="text-align: left;">基于统计频率或简单启发式</td>
+<td style="text-align: left;">残差修正、跨层路由路径预测、语义感知</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>缓存策略</strong></td>
+<td style="text-align: left;">LRU/LFU</td>
+<td style="text-align: left;">工作负载感知、预测性局部感知、SLRU/LFRU</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>卸载目标</strong></td>
+<td style="text-align: left;">CPU内存/NVMe</td>
+<td style="text-align: left;">==CPU内存 + 动态精度分级 + 与KV Cache协同==</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>理论指导</strong></td>
+<td style="text-align: left;">经验性尝试</td>
+<td style="text-align: left;">局部路由一致性量化、最优缓存大小理论</td>
+</tr>
+</tbody>
+</table>
+    </div>
+</body>
+</html>

@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KV Cache卸载技术</title>
+    <style>
+        body {
+            font-family: "Microsoft YaHei", Arial, sans-serif;
+            line-height: 1.8;
+            color: #333;
+            background: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h1 {
+            font-size: 2.2em;
+            margin-bottom: 10px;
+            color: #2c3e50;
+            border-bottom: 3px solid #e67e22;
+            padding-bottom: 10px;
+        }
+        h2 {
+            font-size: 1.6em;
+            margin: 35px 0 20px 0;
+            color: #d35400;
+            border-left: 4px solid #e67e22;
+            padding-left: 15px;
+        }
+        h3 {
+            font-size: 1.3em;
+            margin: 25px 0 15px 0;
+            color: #34495e;
+        }
+        h4 {
+            font-size: 1.1em;
+            margin: 20px 0 10px 0;
+            color: #34495e;
+        }
+        p {
+            margin-bottom: 15px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        th {
+            background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);
+            color: white;
+            font-weight: 600;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        tr:hover {
+            background-color: #fff3e6;
+        }
+        ul, ol {
+            margin-left: 30px;
+            margin-bottom: 15px;
+        }
+        li {
+            margin-bottom: 8px;
+        }
+        blockquote {
+            border-left: 4px solid #e67e22;
+            padding-left: 20px;
+            margin: 20px 0;
+            color: #7f8c8d;
+            font-style: italic;
+            background: #fff9f0;
+            padding: 15px 20px;
+        }
+        hr {
+            border: none;
+            height: 1px;
+            background: linear-gradient(to right, transparent, #e67e22, transparent);
+            margin: 30px 0;
+        }
+        strong {
+            color: #2c3e50;
+            font-weight: bold;
+        }
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            color: #e74c3c;
+        }
+        pre {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 20px 0;
+        }
+        pre code {
+            background: none;
+            color: inherit;
+            padding: 0;
+        }
+        a {
+            color: #e67e22;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        mark {
+            background: #fff3cd;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+<h2 id="kv-cache-20252026">KV Cache 卸载算法发展现状（2025–2026）</h2>
+<p>2025至2026年，KV Cache 卸载从早期的"简单分层搬运"演进为<strong>计算-通信协同设计、预测性调度、与压缩/驱逐深度融合</strong>的精细化系统。以下是当前的核心进展与重点工作。</p>
+<h3 id="_1">一、技术路线分类</h3>
+<p>根据2026年3月的==一篇系统综述，当前KV Cache优化可分为五大类：缓存驱逐、缓存压缩、混合内存（卸载）、新型注意力机制、以及组合方法==。其中，<strong>卸载类方法（Hybrid Memory）</strong> 的核心优势在于无损精度，且与模型结构无关，特别适合高并发、多租户的数据中心部署。</p>
+<p><a href="https://arxiv.org/html/2603.20397v1"></a></p>
+<h3 id="_2">二、重点工作详解</h3>
+<h4 id="1-scoutattentiongpu-cpu">1. ScoutAttention：GPU-CPU协同的层前预计算</h4>
+<p><strong>ScoutAttention</strong>（2026年3月）提出了一种全新的协同注意力计算范式。传统卸载方法要么频繁进行GPU-CPU数据传输，要么让CPU承担过重计算导致GPU空等。ScoutAttention 引入<strong>层前CPU预计算（layer-ahead CPU pre-computation）</strong> 机制：CPU提前一层启动注意力计算，配合异步周期性召回，将CPU负载降至最低。实验显示，在精度损失不超过2.4%的前提下，相比现有卸载方法实现 <strong>2.1× 加速</strong>。
+<a href="https://arxiv.org/abs/2603.27138"></a></p>
+<h4 id="2-shadowkvkey-value">2. ShadowKV：Key压缩 + Value卸载的混合架构</h4>
+<p><strong>ShadowKV</strong> 采用"分而治之"策略：利用 pre-RoPE Key 的强低秩结构，通过SVD压缩后保留在GPU；Value 向量不具备低秩性，则卸载至CPU内存。解码阶段，系统将 post-RoPE Key 分块并计算 landmark 向量，仅从高相似度块对应的CPU内存中检索 Value，同时GPU端解压 Key。这种<strong>选择性检索</strong>避免了全量搬运。
+<a href="https://arxiv.org/html/2603.20397v1"></a></p>
+<h4 id="3-inf2computational-storage">3. INF2：近存储计算（Computational Storage）</h4>
+<p>INF2 利用带FPGA加速器的<strong>计算存储设备（CSD）</strong>，将KV Cache直接存放在SSD上，通过私有PCIe Switch将数据加载到存储端加速器进行多头注意力计算，GPU同步处理MLP部分。新产生的KV条目先暂存RAM再批量写入SSD。该方法将注意力计算<strong>迁移到数据所在位置</strong>，从根本上减少PCIe流量。
+<a href="https://arxiv.org/html/2603.20397v1"></a></p>
+<h4 id="4-headinfer-instinfer">4. HeadInfer &amp; InstInfer：极端长上下文卸载</h4>
+<ul>
+<li>
+<p><strong>HeadInfer</strong>（2025）按注意力头粒度卸载KV Cache，在百万token上下文下实现约 <strong>92% 的KV内存削减</strong>。</p>
+</li>
+<li>
+<p><strong>InstInfer</strong> 进一步将KV Cache推入存储类设备（Storage-class Memory），探索比DRAM更低成本的存储层级。  <br />
+<a href="https://arxiv.org/html/2604.21026v1"></a></p>
+</li>
+</ul>
+<h4 id="5-superinfergrace-hopper">5. SuperInfer：面向Grace Hopper架构的调度优化</h4>
+<p>针对NVIDIA Grace Hopper（GH200）等统一内存架构，<strong>SuperInfer</strong> 配置了400GB Grace DRAM作为KV卸载空间，并设计了 <strong>RotaSched</strong> 调度器，在TTFT（首token时间）和TBT（token间时间）的SLO约束下，实现高吞吐的长上下文服务。
+<a href="https://arxiv.org/html/2601.20309v2"></a></p>
+<h4 id="6-continuumagentttl">6. Continuum：多轮Agent场景的TTL机制</h4>
+<p>在多轮Agent工作负载中，工具调用导致的停顿会使传统"请求结束即驱逐"策略失效。<strong>Continuum</strong> 引入<strong>Time-to-Live（TTL）</strong>机制：对生成工具调用的请求，根据重载成本和排队延迟计算TTL，在GPU中固定KV Cache；TTL到期后自动驱逐。在SWE-Bench、BFCL等真实Agent任务上，平均作业完成时间提升 <strong>8× 以上</strong>。
+<a href="https://arxiv.org/abs/2511.02230"></a></p>
+<h4 id="7-kvp">7. KVP：强化学习驱动的驱逐策略</h4>
+<p><strong>KVP（Learning to Evict from Key-Value Cache）</strong> 将驱逐问题重新建模为<strong>排序问题</strong>，使用强化学习训练轻量级的逐头（per-head）策略，预测token的未来效用。其奖励信号设计为"跨所有缓存预算的驱逐误差"，确保策略在不同内存限制下均表现稳健。这与传统启发式方法（如H2O、StreamingLLM）有本质区别。
+<a href="https://arxiv.org/html/2602.10238v1"></a></p>
+<h3 id="2026">三、2026年的关键挑战与反思</h3>
+<h4 id="_3">上下文密集型任务的失效问题</h4>
+<p>2026年4月的一项研究指出，现有KV卸载方法在<strong>上下文密集型任务</strong>（如从长文本中提取结构化知识的Text2JSON）上表现显著退化。原因在于：</p>
+<ol>
+<li><strong>低秩Key投影</strong>破坏了需要精确检索的细粒度信息；    </li>
+<li><strong>Landmark向量</strong>在需要大范围信息 lookup 时不可靠。</li>
+</ol>
+<p>该研究提出了一种更简单的替代策略，在Llama 3和Qwen 3上显著改善了此类任务的精度。这提示社区：卸载算法不能仅在通用基准上验证，必须覆盖"需要提取大量信息"的极端场景。
+<a href="https://arxiv.org/abs/2604.08426"></a></p>
+<h4 id="_4">推理感知的分层内存</h4>
+<p>另一项工作（2026年5月）提出"并非所有推理步骤都需要HBM"：在CoT（Chain-of-Thought）推理中，不同推理token的重要性差异巨大。通过<strong>推理感知评分</strong>驱动跨层内存放置（HBM→DRAM→SSD），可将关键推理token保留在快速内存，次要token下沉至慢速层级。这是首个将推理语义与分层卸载结合的工作。
+<a href="https://arxiv.org/html/2605.09490v1"></a></p>
+<h3 id="_5">四、工程实践与开源生态</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">系统/框架</th>
+<th style="text-align: left;">卸载特性</th>
+<th style="text-align: left;">状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>vLLM</strong></td>
+<td style="text-align: left;">PagedAttention块级别CPU卸载、磁盘卸载（实验性）；支持Prefix Caching</td>
+<td style="text-align: left;">生产级</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>SGLang</strong></td>
+<td style="text-align: left;">RadixAttention前缀复用；多级缓存层级</td>
+<td style="text-align: left;">生产级</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>LMCache</strong></td>
+<td style="text-align: left;">多引擎持久KV存储，支持GPU→CPU→SSD分层卸载</td>
+<td style="text-align: left;">企业级</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>TensorRT-LLM</strong></td>
+<td style="text-align: left;">集成KV Cache压缩与卸载</td>
+<td style="text-align: left;">生产级</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Harvest</strong></td>
+<td style="text-align: left;">基于P2P的GPU间KV Cache共享，扩展vLLM的OffloadingHandler</td>
+<td style="text-align: left;">研究级</td>
+</tr>
+</tbody>
+</table>
+<p>当前主流推理栈已形成<strong>三级缓存层次</strong>：GPU HBM（热数据）→ CPU DRAM（温数据）→ NVMe SSD（冷数据），配合Prefix Caching实现3–10×的会话式工作负载吞吐提升。
+<a href="https://callsphere.ai/blog/kv-cache-offloading-cpu-gpu-nvme-tradeoffs-2026"></a></p>
+<h3 id="_6">五、总结与趋势</h3>
+<p>2026年KV Cache卸载算法的核心趋势可概括为：</p>
+<ol>
+<li><strong>从"搬运数据"到"搬运计算"</strong>：INF2、ScoutAttention等将计算推向数据所在层级，而非反向搬运KV。    </li>
+<li><strong>从统一驱逐到语义感知</strong>：KVP的RL驱动驱逐、Continuum的TTL、推理感知的分层放置，都体现了对KV条目"重要性"的精细化建模。    </li>
+<li><strong>从单层优化到系统协同</strong>：卸载不再孤立存在，而是与MoE专家卸载（如DALI）、Prefix Caching、PD分离（Prefill-Decode Disaggregation）深度耦合。    </li>
+<li><strong>从通用场景到垂直场景</strong>：Agent多轮对话、长上下文推理、边缘设备等特定场景催生了专门的卸载策略。</li>
+</ol>
+<p>简言之，==KV Cache卸载已进入<strong>"精准预测 + 异构协同 + 场景定制"</strong>的新阶段==。</p>
+    </div>
+</body>
+</html>
